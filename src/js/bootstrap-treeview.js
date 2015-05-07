@@ -35,6 +35,7 @@
 		collapseIcon: 'glyphicon glyphicon-minus',
 		emptyIcon: 'glyphicon',
 		nodeIcon: 'glyphicon glyphicon-stop',
+		nodeUserIcon: 'glyphicon glyphicon-user',
 
 		color: undefined, // '#000000',
 		backColor: undefined, // '#FFFFFF',
@@ -97,7 +98,8 @@
 
 			// Search methods
 			search: $.proxy(this.search, this),
-			clearSearch: $.proxy(this.clearSearch, this)
+			clearSearch: $.proxy(this.clearSearch, this),
+			test:$.proxy(this.test, this)
 		};
 	};
 
@@ -292,8 +294,29 @@
 	Tree.prototype.toggleExpandedState = function (node, silent) {
 		if (!node) return;
 		this.setExpandedState(node, !node.state.expanded, silent);
+		//call the method customized，update the node's data
+		if(this.options.getData){
+			var newData=this.options.getData(node);//返回值是当前node节点的nodes数组
+			this.updateNodesArray(this.tree,node,newData);
+			var _t = this.tree;this.nodes=[];
+			this.setInitialStates({ nodes: _t }, 0);
+		}
 		this.render();
 	};
+	//search the node and update its dataArray
+	Tree.prototype.updateNodesArray = function (treeArray, node,newDataArray) {
+		for(var i=0;i<treeArray.length;i++){
+			if(treeArray[i].text == node.text){
+				treeArray[i].nodes= newDataArray;
+				return this.tree;
+			}else if(!treeArray[i].nodes){
+				continue;
+			}else{
+				this.updateNodesArray(treeArray[i].nodes,node,newDataArray);
+			}
+		}
+	};
+
 
 	Tree.prototype.setExpandedState = function (node, state, silent) {
 
@@ -389,29 +412,41 @@
 				treeItem.append(_this.template.indent);
 			}
 
-			// Add expand, collapse or empty spacer icons
-			if (node.nodes) {
+			// Add expand, collapse or empty spacer icons 
+			//if (node.nodes) {
 				if (!node.state.expanded) {
-						treeItem
-							.append($(_this.template.expandCollapseIcon)
-								.addClass('click-expand')
-								.addClass(_this.options.expandIcon)
-							);
+						var str = $(_this.template.expandCollapseIcon);
+						if(node.isUser){
+							treeItem
+								.append(str);
+						}else{
+							treeItem
+								.append($(_this.template.expandCollapseIcon)
+									.addClass('click-expand')
+									.addClass(_this.options.expandIcon)
+								);
+						}
 					}
 					else {
-						treeItem
-							.append($(_this.template.expandCollapseIcon)
-								.addClass('click-collapse')
-								.addClass(_this.options.collapseIcon)
-							);
+						var str = $(_this.template.expandCollapseIcon);
+						if(node.isUser){
+							treeItem
+								.append(str);
+						}else{
+							treeItem
+								.append($(_this.template.expandCollapseIcon)
+									.addClass('click-collapse')
+									.addClass(_this.options.collapseIcon)
+								);
+						}
 					}
-			}
-			else {
+			//}
+			/*else {
 				treeItem
-					.append($(_this.template.expandCollapseIcon)
+					.append($(_this.template.expandCollapseIcon).addClass('click-expand')
 						.addClass(_this.options.emptyIcon)
 					);
-			}
+			}*/
 
 			// Add node icon
 			treeItem
